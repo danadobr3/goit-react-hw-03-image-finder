@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { Icon } from '@iconify/react';
 
 import csssearchbar from './Searchbar.module.css';
 
@@ -23,6 +24,7 @@ class Searchbar extends Component {
       <header className={csssearchbar.Searchbar}>
         <form className={csssearchbar.SearchForm} onSubmit={this.handleSubmit}>
           <button type="submit" className={csssearchbar.SearchForm_button}>
+            <Icon icon="mdi:magnify" width="28" height="28" />
             <span className={csssearchbar.SearchForm_button_label}>Search</span>
           </button>
 
