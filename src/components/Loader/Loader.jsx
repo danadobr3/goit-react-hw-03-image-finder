@@ -1,5 +1,4 @@
 import { TailSpin } from 'react-loader-spinner';
-
 import cssloader from './Loader.module.css';
 
 const Loader = () => (

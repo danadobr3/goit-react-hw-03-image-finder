@@ -9,96 +9,79 @@ import Notiflix from 'notiflix';
 
 import cssapp from './App.module.css';
 
-
-let page = 1;
-
 class App extends Component {
   state = {
     inputData: '',
     items: [],
-
     status: 'idle',
     totalHits: 0,
+    page: 1,
+    loadingMore: false,
   };
 
-  handleSubmit = async inputData => {
-    page = 1;
-    if (inputData.trim() === '') {
-      Notiflix.Notify.info('You cannot search by empty field, try again.');
-      return;
-    } else {
+  async componentDidUpdate(prevProps, prevState) {
+    const { inputData, page } = this.state;
+
+    if (prevState.inputData !== inputData || prevState.page !== page) {
       try {
         this.setState({ status: 'pending' });
         const { totalHits, hits } = await fetchImages(inputData, page);
-        if (hits.length < 1) {
-          this.setState({ status: 'idle' });
-          Notiflix.Notify.failure(
-            'Sorry, there are no images matching your search query. Please try again.'
-          );
-        } else {
+
+        if (page === 1) {
           this.setState({
             items: hits,
-            inputData,
-            totalHits: totalHits,
+            totalHits,
             status: 'resolved',
           });
+        } else {
+          this.setState(prevState => ({
+            items: [...prevState.items, ...hits],
+            totalHits,
+            status: 'resolved',
+          }));
         }
       } catch (error) {
         this.setState({ status: 'rejected' });
+      } finally {
+        this.setState({ loadingMore: false });
       }
     }
-  };
-  onNextPage = async () => {
-    this.setState({ status: 'pending' });
+  }
 
-    try {
-      const { hits } = await fetchImages(this.state.inputData, (page += 1));
-      this.setState(prevState => ({
-        items: [...prevState.items, ...hits],
-        status: 'resolved',
-      }));
-    } catch (error) {
-      this.setState({ status: 'rejected' });
+  handleSubmit = async inputData => {
+    this.setState({ page: 1 });
+
+    if (inputData.trim() === '') {
+      Notiflix.Notify.info('You cannot search by an empty field, try again.');
+      return;
     }
+
+    this.setState({ inputData });
   };
+
+  onNextPage = () => {
+  this.setState(prevState => ({ page: prevState.page + 1, loadingMore: true }));
+};
+
   render() {
-    const { totalHits, status, items } = this.state;
-    if (status === 'idle') {
-      return (
-        <div className={cssapp.App}>
-          <Searchbar onSubmit={this.handleSubmit} />
-        </div>
-      );
-    }
-    if (status === 'pending') {
-      return (
-        <div className={cssapp.App}>
-          <Searchbar onSubmit={this.handleSubmit} />
-          <ImageGallery page={page} items={this.state.items} />
-          <Loader />
-          {totalHits > 12 && <Button onClick={this.onNextPage} />}
-        </div>
-      );
-    }
-    if (status === 'rejected') {
-      return (
-        <div className={cssapp.App}>
-          <Searchbar onSubmit={this.handleSubmit} />
-          <p>Something wrong, try later</p>
-        </div>
-      );
-    }
-    if (status === 'resolved') {
-      return (
-        <div className={cssapp.App}>
-          <Searchbar onSubmit={this.handleSubmit} />
-          <ImageGallery page={page} items={this.state.items} />
-          {totalHits > 12 && totalHits > items.length && (
-            <Button onClick={this.onNextPage} />
-          )}
-        </div>
-      );
-    }
+    const { totalHits, status, items, loadingMore } = this.state;
+
+    return (
+      <div className={cssapp.App}>
+        <Searchbar onSubmit={this.handleSubmit} />
+        {status === 'pending' && <Loader />}
+        {status === 'rejected' && <p>Something went wrong. Please try again later.</p>}
+        {status === 'resolved' && (
+          <>
+            <ImageGallery page={this.state.page} items={items} />
+            {totalHits > items.length && totalHits > 12 && !loadingMore && (
+              <Button type="button" onClick={this.onNextPage} />
+            )}
+          </>
+        )}
+      </div>
+    );
   }
 }
+
 export default App;
