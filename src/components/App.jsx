@@ -64,21 +64,19 @@ class App extends Component {
 };
 
   render() {
-    const { totalHits, status, items, loadingMore } = this.state;
+    const { totalHits, items, loadingMore } = this.state;
 
     return (
       <div className={cssapp.App}>
         <Searchbar onSubmit={this.handleSubmit} />
-        {status === 'pending' && <Loader />}
-        {status === 'rejected' && <p>Something went wrong. Please try again later.</p>}
-        {status === 'resolved' && (
-          <>
-            <ImageGallery page={this.state.page} items={items} />
-            {totalHits > items.length && totalHits > 12 && !loadingMore && (
-              <Button type="button" onClick={this.onNextPage} />
-            )}
-          </>
-        )}
+        {items.length > 0 && (
+        <ImageGallery page={this.state.page} items={items} />
+      )}
+      {loadingMore && <Loader />}
+      {items.length === 0 && <p>No results found.</p>}
+      {totalHits > items.length && totalHits > 12 && !loadingMore && (
+        <Button type="button" onClick={this.onNextPage} />
+      )}
       </div>
     );
   }
