@@ -27,19 +27,12 @@ class App extends Component {
         this.setState({ status: 'pending' });
         const { totalHits, hits } = await fetchImages(inputData, page);
 
-        if (page === 1) {
-          this.setState({
-            items: hits,
-            totalHits,
-            status: 'resolved',
-          });
-        } else {
-          this.setState(prevState => ({
-            items: [...prevState.items, ...hits],
-            totalHits,
-            status: 'resolved',
-          }));
-        }
+        this.setState((prevState) => ({
+          items: page === 1 ? hits : [...prevState.items, ...hits],
+          totalHits,
+          status: 'resolved',
+        }));
+
       } catch (error) {
         this.setState({ status: 'rejected' });
       } finally {
@@ -48,15 +41,13 @@ class App extends Component {
     }
   }
 
-  handleSubmit = async inputData => {
-    this.setState({ page: 1 });
-
+  handleSubmit = async (inputData) => {
     if (inputData.trim() === '') {
       Notiflix.Notify.info('You cannot search by an empty field, try again.');
       return;
     }
 
-    this.setState({ inputData });
+    this.setState({ inputData, page: 1, items: [], loadingMore: false });
   };
 
   onNextPage = () => {
